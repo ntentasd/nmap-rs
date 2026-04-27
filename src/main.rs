@@ -21,6 +21,10 @@ struct Args {
     /// Number of tries
     #[arg(short, long, default_value_t = 1)]
     tries: u8,
+
+    /// Timeout duration in milliseconds
+    #[arg(long, default_value_t = 3)]
+    timeout: u64,
 }
 
 #[tokio::main]
@@ -29,7 +33,7 @@ async fn main() -> Result<()> {
 
     let sc = Scanner::new(format!("{}:{}", args.address, args.port), args.tries).await?;
 
-    let res = sc.scan(Duration::from_millis(500)).await?;
+    let res = sc.scan(Duration::from_millis(args.timeout)).await?;
 
     println!("{}", res);
 
