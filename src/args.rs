@@ -21,10 +21,20 @@ pub struct Args {
     /// Timeout duration in milliseconds
     #[arg(long, default_value_t = 3)]
     pub timeout: u64,
+
+    /// Show all ports, including closed and timed out
+    #[arg(long, default_value_t = false)]
+    pub all: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct Ports(Vec<u16>);
+
+impl Ports {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
 
 impl FromStr for Ports {
     type Err = String;
