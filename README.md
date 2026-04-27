@@ -5,7 +5,7 @@ A minimal TCP port scanner written in Rust with async I/O.
 ## Usage
 
 ```sh
-nmap-rs --address <ADDRESS> --port <PORT> [--tries <TRIES>]
+nmap-rs --address <ADDRESS> --port <PORT> [--tries <TRIES>] [--timeout <MS>]
 ```
 
 **Options:**
@@ -13,6 +13,7 @@ nmap-rs --address <ADDRESS> --port <PORT> [--tries <TRIES>]
 - `-a, --address` — target host (default: `127.0.0.1`)
 - `-p, --port` — port to scan (required)
 - `-t, --tries` — number of connection attempts (default: `1`)
+- `--timeout` — per-attempt timeout in milliseconds (default: `3`)
 
 ## Build
 
