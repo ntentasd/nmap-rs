@@ -5,8 +5,8 @@ mod scanner;
 use args::Args;
 use clap::Parser;
 use scanner::Scanner;
-use std::io::Result;
-use tokio::{task::JoinSet, time::Duration};
+use std::{io::Result, sync::Arc};
+use tokio::{sync::Semaphore, task::JoinSet, time::Duration};
 
 use crate::scanner::ScanStatus;
 
@@ -17,9 +17,13 @@ async fn main() -> Result<()> {
     let mut js = JoinSet::new();
     let size = args.ports.len();
 
+    let semaphore = Arc::new(Semaphore::new(args.concurrency));
+
     for port in args.ports {
+        let permit = semaphore.clone().acquire_owned().await.unwrap();
         let address = args.address.clone();
         js.spawn(async move {
+            let _permit = permit;
             let sc = Scanner::new(format!("{}:{}", address, port), args.tries).await?;
             sc.scan(Duration::from_millis(args.timeout)).await
         });

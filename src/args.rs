@@ -25,6 +25,10 @@ pub struct Args {
     /// Show all ports, including closed and timed out
     #[arg(long, default_value_t = false)]
     pub all: bool,
+
+    /// Number of concurrent scans
+    #[arg(short = 'j', long, default_value_t = 5)]
+    pub concurrency: usize,
 }
 
 #[derive(Clone, Debug)]
