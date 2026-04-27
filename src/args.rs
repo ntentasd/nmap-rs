@@ -43,28 +43,30 @@ impl Ports {
 impl FromStr for Ports {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains('-') {
-            let mut split = s.split('-');
-            let (Some(start), Some(end), None) = (split.next(), split.next(), split.next()) else {
-                return Err("invalid range format".to_string());
-            };
-            let start: u16 = start.parse().map_err(|e: ParseIntError| e.to_string())?;
-            let end: u16 = end.parse().map_err(|e: ParseIntError| e.to_string())?;
+        let mut split_chunks = s.split(',');
+        let mut ports = Vec::with_capacity(100);
 
-            if start > end {
-                return Err("invalid range".to_string());
+        while let Some(chunk) = split_chunks.next() {
+            if chunk.contains('-') {
+                let mut split = chunk.split('-');
+                let (Some(start), Some(end), None) = (split.next(), split.next(), split.next())
+                else {
+                    return Err("invalid range format".to_string());
+                };
+                let start: u16 = start.parse().map_err(|e: ParseIntError| e.to_string())?;
+                let end: u16 = end.parse().map_err(|e: ParseIntError| e.to_string())?;
+
+                if start > end {
+                    return Err("invalid range".to_string());
+                }
+
+                ports.extend(start..=end);
+            } else {
+                ports.push(chunk.parse().map_err(|e: ParseIntError| e.to_string())?);
             }
-
-            Ok(Ports((start..=end).collect()))
-        } else {
-            let ports = s
-                .split(',')
-                .map(|s| s.parse::<u16>())
-                .collect::<Result<Vec<u16>, _>>()
-                .map_err(|e| e.to_string())?;
-
-            Ok(Ports(ports))
         }
+
+        Ok(Ports(ports))
     }
 }
 
