@@ -13,7 +13,7 @@ nmap-rs --address <ADDRESS> --port <PORT> [--tries <TRIES>] [--timeout <MS>]
 - `-a, --address` — target host (default: `127.0.0.1`)
 - `-p, --port` — port to scan (required)
 - `-t, --tries` — number of connection attempts (default: `1`)
-- `--timeout` — per-attempt timeout in milliseconds (default: `3`)
+- `--timeout` — per-attempt timeout in milliseconds (default: `1000`)
 
 ## Build
 

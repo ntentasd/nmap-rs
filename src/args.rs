@@ -19,7 +19,7 @@ pub struct Args {
     pub tries: u8,
 
     /// Timeout duration in milliseconds
-    #[arg(long, default_value_t = 3)]
+    #[arg(long, default_value_t = 1000)]
     pub timeout: u64,
 
     /// Show all ports, including closed and timed out
