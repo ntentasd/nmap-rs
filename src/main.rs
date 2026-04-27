@@ -4,6 +4,7 @@ mod scanner;
 use clap::Parser;
 use scanner::Scanner;
 use std::io::Result;
+use tokio::time::Duration;
 
 /// Simple program to scan ports
 #[derive(Parser, Debug)]
@@ -28,7 +29,7 @@ async fn main() -> Result<()> {
 
     let sc = Scanner::new(format!("{}:{}", args.address, args.port), args.tries).await?;
 
-    let res = sc.scan().await?;
+    let res = sc.scan(Duration::from_millis(500)).await?;
 
     println!("{}", res);
 

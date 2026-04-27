@@ -15,6 +15,7 @@ pub struct Scanner {
 pub enum ScanStatus {
     Open,
     Closed,
+    TimedOut,
     // TODO: add more options
 }
 
@@ -73,21 +74,24 @@ impl Scanner {
         Ok(Scanner { address, tries })
     }
 
-    pub async fn scan(&self) -> Result<ScanResult> {
+    pub async fn scan(&self, timeout: tokio::time::Duration) -> Result<ScanResult> {
         let mut last_error: Option<Error> = None;
         for i in 0..self.tries {
-            match TcpStream::connect(self.address).await {
-                Ok(_stream) => {
-                    return Ok(ScanResult::new(ScanStatus::Open, i + 1, self.address));
-                }
-                Err(e) => match e.kind() {
-                    ErrorKind::ConnectionRefused => {
-                        return Ok(ScanResult::new(ScanStatus::Closed, i + 1, self.address));
+            match tokio::time::timeout(timeout, TcpStream::connect(self.address)).await {
+                Ok(res) => match res {
+                    Ok(_stream) => {
+                        return Ok(ScanResult::new(ScanStatus::Open, i + 1, self.address));
                     }
-                    _ => {
-                        last_error = Some(e);
-                    }
+                    Err(e) => match e.kind() {
+                        ErrorKind::ConnectionRefused => {
+                            return Ok(ScanResult::new(ScanStatus::Closed, i + 1, self.address));
+                        }
+                        _ => {
+                            last_error = Some(e);
+                        }
+                    },
                 },
+                Err(_) => return Ok(ScanResult::new(ScanStatus::TimedOut, i + 1, self.address)),
             }
         }
         Err(last_error.unwrap())
@@ -112,6 +116,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_port_scan() {
+        use tokio::time::Duration;
+
         let (tx, rx) = tokio::sync::oneshot::channel::<()>();
 
         tokio::spawn(async move {
@@ -127,7 +133,7 @@ mod tests {
         let result = Scanner::new("127.0.0.1:31234", 3)
             .await
             .unwrap()
-            .scan()
+            .scan(Duration::from_millis(500))
             .await
             .unwrap();
         assert_eq!(result.status, ScanStatus::Open);

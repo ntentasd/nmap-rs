@@ -5,6 +5,7 @@ impl std::fmt::Display for ScanStatus {
         match self {
             ScanStatus::Open => write!(f, "open"),
             ScanStatus::Closed => write!(f, "closed"),
+            ScanStatus::TimedOut => write!(f, "timed out"),
         }
     }
 }
