@@ -28,7 +28,9 @@ async fn main() -> Result<()> {
 
     let sc = Scanner::new(format!("{}:{}", args.address, args.port), args.tries).await?;
 
-    sc.scan().await?;
+    let res = sc.scan().await?;
+
+    println!("{}", res);
 
     Ok(())
 }

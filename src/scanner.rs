@@ -1,6 +1,6 @@
 use std::{
     io::{Error, ErrorKind, Result},
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
 };
 
 use tokio::net::{TcpStream, ToSocketAddrs};
@@ -9,6 +9,50 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 pub struct Scanner {
     address: SocketAddr,
     tries: u8,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ScanStatus {
+    Open,
+    Closed,
+    // TODO: add more options
+}
+
+#[derive(Debug)]
+pub struct ScanResult {
+    status: ScanStatus,
+    tries: u8,
+    address: IpAddr,
+    port: u16,
+}
+
+impl ScanResult {
+    fn new(status: ScanStatus, tries: u8, socket: SocketAddr) -> Self {
+        let address = socket.ip();
+        let port = socket.port();
+        Self {
+            status,
+            tries,
+            address,
+            port,
+        }
+    }
+
+    pub fn status(&self) -> &ScanStatus {
+        &self.status
+    }
+
+    pub fn tries(&self) -> u8 {
+        self.tries
+    }
+
+    pub fn address(&self) -> IpAddr {
+        self.address
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
+    }
 }
 
 impl Scanner {
@@ -29,17 +73,24 @@ impl Scanner {
         Ok(Scanner { address, tries })
     }
 
-    pub async fn scan(&self) -> Result<()> {
-        let mut last_err: Option<Error> = None;
-        for _ in 0..self.tries {
+    pub async fn scan(&self) -> Result<ScanResult> {
+        let mut last_error: Option<Error> = None;
+        for i in 0..self.tries {
             match TcpStream::connect(self.address).await {
-                Ok(_stream) => return Ok(()),
-                Err(e) => {
-                    last_err = Some(e);
+                Ok(_stream) => {
+                    return Ok(ScanResult::new(ScanStatus::Open, i + 1, self.address));
                 }
+                Err(e) => match e.kind() {
+                    ErrorKind::ConnectionRefused => {
+                        return Ok(ScanResult::new(ScanStatus::Closed, i + 1, self.address));
+                    }
+                    _ => {
+                        last_error = Some(e);
+                    }
+                },
             }
         }
-        Err(last_err.unwrap())
+        Err(last_error.unwrap())
     }
 }
 
@@ -77,7 +128,8 @@ mod tests {
             .await
             .unwrap()
             .scan()
-            .await;
-        assert!(result.is_ok());
+            .await
+            .unwrap();
+        assert_eq!(result.status, ScanStatus::Open);
     }
 }
